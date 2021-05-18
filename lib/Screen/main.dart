@@ -12,14 +12,6 @@ void main() async {
   runApp(MyApp());
 }
 
-final dummySnapshot = [
-  {"name": "Filip", "votes": 15},
-  {"name": "Abraham", "votes": 14},
-  {"name": "Richard", "votes": 11},
-  {"name": "Ike", "votes": 10},
-  {"name": "Justin", "votes": 1},
-];
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -53,14 +45,13 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Baby Name Votes')),
       body: _buildBody(context),
     );
   }
 
   Widget _buildBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('baby').snapshots(),
+      stream: FirebaseFirestore.instance.collection('food').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
 
@@ -89,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         child: ListTile(
           title: Text(record.name),
-          trailing: Text(record.votes.toString()),
+          trailing: Text(record.num.toString()),
           onTap: () => record.reference.update({'votes': FieldValue.increment(1)}),
         ),
       ),
@@ -99,38 +90,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
 class Record {
   final String name;
-  final int votes;
+  final Timestamp num;
   final DocumentReference reference;
 
   Record.fromMap(Map<String, dynamic> map, {this.reference})
       : assert(map['name'] != null),
-        assert(map['votes'] != null),
+        assert(map['num'] != null),
         name = map['name'],
-        votes = map['votes'];
+        num = map['num'];
 
   Record.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data(), reference: snapshot.reference);
 
   @override
-  String toString() => "Record<$name:$votes>";
-}
-
-
-class Tutorial_page extends StatelessWidget{
-  @override
-  Widget build(BuildContext context){
-    return Scaffold(
-      body: SafeArea(
-        child: Container(
-          color: Colors.blue,
-          child: Column(
-            children: [
-              SvgPicture.asset("assets/images/nangjang1.svg", ),
-              Text("hello world")
-            ],
-          ),
-        ),
-      )
-    );
-  }
+  String toString() => "Record<$name:$num>";
 }

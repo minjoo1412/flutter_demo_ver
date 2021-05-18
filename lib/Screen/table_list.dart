@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_demo_ver/constants.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter_demo_ver/event.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_demo_ver/Screen/main.dart';
+
 
 class Tabless extends StatefulWidget {
   @override
@@ -12,10 +15,12 @@ class Tabless extends StatefulWidget {
 }
 
 class _TableList extends State<Tabless> {
+  final List<String> testsss = ['hello', "dfsa", "wrteh"];
   Map<DateTime, List<Event>> selectedEvents;
   TextEditingController _eventController = TextEditingController();
   DateTime selectedDay = DateTime.now();
   DateTime focusedDay = DateTime.now();
+  bool check = false;
   @override
   void initState() {
     selectedEvents = {};
@@ -31,15 +36,14 @@ class _TableList extends State<Tabless> {
     super.dispose();
   }
 
-  Container taskList(String title, String description, IconData iconimg,
-      Color iconcolor, BuildContext contexts) {
+  Widget taskList(String title, String description, BuildContext contexts) {
     return Container(
       padding: EdgeInsets.only(top: 30),
       child: Row(
         children: <Widget>[
           Icon(
-            iconimg,
-            color: iconcolor,
+            CupertinoIcons.check_mark_circled_solid,
+            color: Colors.white,
             size: 30,
           ),
           Container(
@@ -61,7 +65,7 @@ class _TableList extends State<Tabless> {
                     style: (TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.normal,
-                        color: Colors.white)))
+                        color: Colors.white))),
               ],
             ),
           )
@@ -71,9 +75,33 @@ class _TableList extends State<Tabless> {
   }
 
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
     return Scaffold(
-      body: Container(
+      body: _buildBody(context),
+    );
+  }
+
+  Widget _buildBody(BuildContext context){
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('food').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return LinearProgressIndicator();
+        return _buildall(context, snapshot.data.docs);
+      },
+    );
+  }
+
+  Widget _buildall(BuildContext context, List<DocumentSnapshot> snapshot){
+    Size size = MediaQuery.of(context).size;
+
+
+    List<Container> massageWis = [];
+
+    for(var message in snapshot){
+      final messageWi = taskList(message.data()['name'],message.data()['num'].toDate().toString(),context);
+      massageWis.add(messageWi);
+    }
+
+    return Container(
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
@@ -102,9 +130,9 @@ class _TableList extends State<Tabless> {
                 calendarStyle: CalendarStyle(
                   outsideDaysVisible: true,
                   weekendTextStyle:
-                      TextStyle(fontSize: 12).copyWith(color: Colors.red),
+                  TextStyle(fontSize: 12).copyWith(color: Colors.red),
                   holidayTextStyle:
-                      TextStyle(fontSize: 12).copyWith(color: Colors.red),
+                  TextStyle(fontSize: 12).copyWith(color: Colors.red),
                 ),
 
                 locale: 'ko-KR',
@@ -134,18 +162,19 @@ class _TableList extends State<Tabless> {
                                   fontSize: 30,
                                   fontWeight: FontWeight.bold),
                             )),
-                        taskList(
-                            "task 1",
-                            "hello world!!!",
-                            CupertinoIcons.check_mark_circled_solid,
-                            Colors.white,
-                            context),
-                        taskList(
-                            "task 1",
-                            "hello world!!!",
-                            CupertinoIcons.check_mark_circled_solid,
-                            Colors.white,
-                            context)
+                        Column(
+                          children: massageWis,
+                        )
+
+                        /*
+                        Expanded(
+                            child: ListView.builder(
+                              itemCount: snapshot.length,
+                                itemBuilder: (BuildContext context, int index){
+                                  return taskList(snapshot.toString(), "hihihi", context);
+                                })
+                        ),*/
+
                       ],
                     ),
                     Positioned(
@@ -158,13 +187,13 @@ class _TableList extends State<Tabless> {
                                   begin: FractionalOffset.topCenter,
                                   end: FractionalOffset.bottomCenter,
                                   colors: [
-                                kPrimaryColor.withOpacity(0),
-                                kPrimaryColor
-                              ],
+                                    kPrimaryColor.withOpacity(0),
+                                    kPrimaryColor
+                                  ],
                                   stops: [
-                                0.0,
-                                1.0
-                              ])),
+                                    0.0,
+                                    1.0
+                                  ])),
                         )),
                     Positioned(
                       bottom: 30,
@@ -190,7 +219,7 @@ class _TableList extends State<Tabless> {
                                       if (selectedEvents[selectedDay] != null) {
                                         selectedEvents[selectedDay].add(Event(
                                             title: _eventController.text));
-                                      }else{
+                                      }else {
                                         selectedEvents[selectedDay] = [Event(title: _eventController.text)];
                                       }
                                     }
@@ -199,7 +228,7 @@ class _TableList extends State<Tabless> {
                                     setState(() {});
                                     return;
                                   }
-                                  )
+                              )
                             ],
                           ),
                         ),
@@ -211,7 +240,6 @@ class _TableList extends State<Tabless> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
