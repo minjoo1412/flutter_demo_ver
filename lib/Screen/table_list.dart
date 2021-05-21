@@ -4,7 +4,6 @@ import 'package:flutter_demo_ver/constants.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter_demo_ver/event.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_demo_ver/Screen/main.dart';
 
 
 class Tabless extends StatefulWidget {
@@ -15,12 +14,11 @@ class Tabless extends StatefulWidget {
 }
 
 class _TableList extends State<Tabless> {
-  final List<String> testsss = ['hello', "dfsa", "wrteh"];
   Map<DateTime, List<Event>> selectedEvents;
   TextEditingController _eventController = TextEditingController();
   DateTime selectedDay = DateTime.now();
   DateTime focusedDay = DateTime.now();
-  bool check = false;
+
   @override
   void initState() {
     selectedEvents = {};
@@ -76,13 +74,20 @@ class _TableList extends State<Tabless> {
 
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("hello"),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        leading: IconButton(icon: Icon(Icons.camera_alt), onPressed: (){print("hellossdf");}),
+      ),
       body: _buildBody(context),
     );
   }
 
+
   Widget _buildBody(BuildContext context){
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('food').snapshots(),
+      stream: FirebaseFirestore.instance.collection('food').orderBy('num',descending: false).snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
         return _buildall(context, snapshot.data.docs);
@@ -90,12 +95,11 @@ class _TableList extends State<Tabless> {
     );
   }
 
+
   Widget _buildall(BuildContext context, List<DocumentSnapshot> snapshot){
     Size size = MediaQuery.of(context).size;
 
-
     List<Container> massageWis = [];
-
     for(var message in snapshot){
       final messageWi = taskList(message.data()['name'],message.data()['num'].toDate().toString(),context);
       massageWis.add(messageWi);
@@ -105,7 +109,6 @@ class _TableList extends State<Tabless> {
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              SizedBox(height: size.height * 0.03),
               TableCalendar(
                 firstDay: DateTime.utc(1990),
                 lastDay: DateTime.utc(2030),
@@ -164,8 +167,7 @@ class _TableList extends State<Tabless> {
                             )),
                         Column(
                           children: massageWis,
-                        )
-
+                        ),
                         /*
                         Expanded(
                             child: ListView.builder(
@@ -219,13 +221,23 @@ class _TableList extends State<Tabless> {
                                       if (selectedEvents[selectedDay] != null) {
                                         selectedEvents[selectedDay].add(Event(
                                             title: _eventController.text));
-                                      }else {
-                                        selectedEvents[selectedDay] = [Event(title: _eventController.text)];
+                                      } else {
+                                        selectedEvents[selectedDay] =
+                                        [Event(title: _eventController.text)];
                                       }
                                     }
                                     Navigator.pop(context);
+                                    if(_eventController.text.isNotEmpty){
+                                      /*massageWis.add(taskList(
+                                          _eventController.text,
+                                          selectedDay.toString(), context));*/
+                                      FirebaseFirestore.instance.collection('food').add(
+                                          {'name': _eventController.text,
+                                            'num': selectedDay});
+                                    }
+                                    setState(() {
+                                    });
                                     _eventController.clear();
-                                    setState(() {});
                                     return;
                                   }
                               )

@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_demo_ver/Screen/Start_page.dart';
 import 'package:flutter_demo_ver/constants.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  final FirebaseMessaging fcm = FirebaseMessaging.instance;
+
+
   runApp(MyApp());
 }
 
