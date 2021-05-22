@@ -6,6 +6,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_demo_ver/Screen/table_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -64,12 +66,12 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   @override
-  _MyHomePageState createState() {
-    return _MyHomePageState();
+  MyHomePageState createState() {
+    return MyHomePageState();
   }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class MyHomePageState extends State<MyHomePage> {
   @override
   void initState(){
     super.initState();
@@ -120,20 +122,20 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
-    void showNotification(){
-      flutterLocalNotificationsPlugin.show(0,
-          "Test now",
-          "hello",
-          NotificationDetails(
-          android: AndroidNotificationDetails(
+    Future<void> showNotification() async{
+      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
+      var currentDateTime = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10));
+      
+      flutterLocalNotificationsPlugin.zonedSchedule(0, "hello", "hi",
+          currentDateTime,
+          NotificationDetails(android: AndroidNotificationDetails(
             channel.id,
             channel.name,
             channel.description,
-            importance: Importance.high,
-            color: Colors.blue,
-            playSound: true, icon: '@mipmap/ic_launcher'
-          )
-      ));
+          )),
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          androidAllowWhileIdle: true);
     }
 
     return Column(
