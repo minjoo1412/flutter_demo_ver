@@ -1,44 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_demo_ver/constants.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_demo_ver/Screen/table_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
 
-const AndroidNotificationChannel channel = AndroidNotificationChannel('high_importance_channel'
-    , 'High Importance Notifications'
-    , 'This channel is used for important notifications.',
-  importance: Importance.high,
-  playSound: true
-);
-
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async{
-  await Firebase.initializeApp();
-  print("message show : ${message.messageId}");
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  var androidSetting = AndroidInitializationSettings('@mipmap/ic_launcher');
+  var initializationSettings = InitializationSettings(android: androidSetting);
 
-  await flutterLocalNotificationsPlugin
-    .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-    ?.createNotificationChannel(channel);
-
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true
-  );
+  await FlutterLocalNotificationsPlugin().initialize(initializationSettings);
 
   runApp(MyApp());
+}
+
+
+Future<void> showNotification() async{
+  tz.initializeTimeZones();
+  tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
+  var currentDateTime = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+
+  var android = AndroidNotificationDetails(
+      'channelId', 'channelName', 'channelDescription');
+  var platform = NotificationDetails(android: android);
+  //await FlutterLocalNotificationsPlugin().show(0, 'title', 'body', platform);
+
+  await FlutterLocalNotificationsPlugin().zonedSchedule(0,
+      'hello',
+      'hie',
+      currentDateTime,
+      platform,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      androidAllowWhileIdle: true);
+
+  currentDateTime = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10));
+
+  await FlutterLocalNotificationsPlugin().zonedSchedule(1,
+      'hello2',
+      'hie2',
+      currentDateTime,
+      platform,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      androidAllowWhileIdle: true);
+
 }
 
 
@@ -72,71 +84,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class MyHomePageState extends State<MyHomePage> {
+  var flutterLocalNotificationsPlugin;
   @override
   void initState(){
     super.initState();
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      RemoteNotification notification = message.notification;
-      AndroidNotification android = message.notification?.android;
-      if(notification != null && android != null){
-        flutterLocalNotificationsPlugin.show(notification.hashCode,
-            notification.title,
-            notification.body,
-            NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channel.description,
-                color: Colors.blue,
-                playSound: true,
-                icon: '@mipmap/ic_launcher'
-              )
-            ));
-      }
-    }
-    );
-
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('event was publish');
-      RemoteNotification notification = message.notification;
-      AndroidNotification android = message.notification?.android;
-      if(notification != null && android != null){
-        showDialog(context: context, builder: (_){
-          return AlertDialog(
-            title: Text(notification.title),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(notification.body)
-                ],
-              ),
-            ),
-          );
-        }
-        );
-      }
-    });
   }
 
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-
-    Future<void> showNotification() async{
-      tz.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation('Asia/Seoul'));
-      var currentDateTime = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10));
-      
-      flutterLocalNotificationsPlugin.zonedSchedule(0, "hello", "hi",
-          currentDateTime,
-          NotificationDetails(android: AndroidNotificationDetails(
-            channel.id,
-            channel.name,
-            channel.description,
-          )),
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-          androidAllowWhileIdle: true);
-    }
 
     return Column(
         children: <Widget>[
@@ -183,8 +138,8 @@ class MyHomePageState extends State<MyHomePage> {
 
                       ),
                       onPressed: (){
-                        showNotification();
-                        //Navigator.push(context, MaterialPageRoute(builder: (context) => Tabless()));
+                        //showNotification();
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Tabless()));
                       },
                       child: Text("  다음  ",
                         style: TextStyle(
